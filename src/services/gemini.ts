@@ -1,9 +1,21 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { BirthData, SoulMapInsights, DailyGuidance } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not defined. Please add it to your environment variables.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export async function generateSoulMap(data: BirthData): Promise<SoulMapInsights> {
+  const ai = getAI();
   const prompt = `Generate a deeply personalized "SoulMap" life blueprint based on the following birth data:
     Date: ${data.birthDate}
     Time: ${data.birthTime || "Unknown"}
@@ -49,6 +61,7 @@ export async function generateSoulMap(data: BirthData): Promise<SoulMapInsights>
 }
 
 export async function generateDailyGuidance(soulMapData: BirthData): Promise<DailyGuidance> {
+  const ai = getAI();
   const prompt = `Based on this user's birth data (${soulMapData.birthDate}, ${soulMapData.birthLocation}), generate a daily guidance report including:
     1. A daily horoscope for their zodiac sign.
     2. A "What to focus on today" and "What to avoid today" section.

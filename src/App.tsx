@@ -94,7 +94,7 @@ const Hero = ({ onStart }: { onStart: () => void }) => (
   </section>
 );
 
-const Form = ({ onSubmit }: { onSubmit: (data: BirthData) => void }) => {
+const Form = ({ onSubmit, error }: { onSubmit: (data: BirthData) => void, error?: string | null }) => {
   const [data, setData] = useState<BirthData>({
     birthDate: '',
     birthLocation: '',
@@ -112,6 +112,12 @@ const Form = ({ onSubmit }: { onSubmit: (data: BirthData) => void }) => {
         <p className="text-slate-400 mb-10">Answer a few quick questions so we can generate your personalized life insights.</p>
         
         <div className="space-y-8">
+          {error && (
+            <div className="p-4 bg-rose-500/10 border border-rose-500/50 rounded-xl text-rose-400 text-sm flex items-center gap-3">
+              <span className="shrink-0 font-bold">Error:</span>
+              <span>{error}</span>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-400 flex items-center gap-2">
@@ -292,20 +298,23 @@ export default function App() {
   const [view, setView] = useState<'home' | 'form' | 'loading' | 'results' | 'dashboard'>('home');
   const [insights, setInsights] = useState<SoulMapInsights | null>(null);
   const [birthData, setBirthData] = useState<BirthData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
 
   const startAnalysis = () => setView('form');
   
   const handleFormSubmit = async (data: BirthData) => {
     setBirthData(data);
+    setError(null);
     setView('loading');
     try {
       const res = await generateSoulMap(data);
       setInsights(res);
-      setTimeout(() => setView('results'), 1000); // Small delay for effect
+      setTimeout(() => setView('results'), 1000); 
     } catch (err) {
       console.error(err);
-      setView('home');
+      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setView('form');
     }
   };
 
@@ -363,7 +372,7 @@ export default function App() {
 
           {view === 'form' && (
             <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Form onSubmit={handleFormSubmit} />
+              <Form onSubmit={handleFormSubmit} error={error} />
             </motion.div>
           )}
 
